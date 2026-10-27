@@ -35,8 +35,13 @@ class DummyHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b"Bot is running")
 
+    def log_message(self, format, *args):
+        return  # Silence logs
+
 def run_web():
-    server = HTTPServer(("0.0.0.0", int(os.getenv("PORT", 10000))), DummyHandler)
+    port = int(os.environ.get("PORT", 10000))
+    print(f"Starting dummy server on port {port}")
+    server = HTTPServer(("0.0.0.0", port), DummyHandler)
     server.serve_forever()
 
 Thread(target=run_web, daemon=True).start()
@@ -59,7 +64,6 @@ async def daily_cycle():
     global daily_message, participants
     now = datetime.now(IST)
 
-    # Start entry
     if now.hour == START_HOUR and now.minute == START_MINUTE:
         channel = bot.get_channel(CHANNEL_ID)
         if channel:
@@ -73,7 +77,6 @@ async def daily_cycle():
             await daily_message.add_reaction(ENTRY_EMOJI)
             print(f"New daily entry started at {now}")
 
-    # End entry / pick winners
     if now.hour == END_HOUR and now.minute == END_MINUTE and daily_message:
         channel = bot.get_channel(CHANNEL_ID)
         if channel and participants:
