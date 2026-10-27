@@ -11,13 +11,9 @@ CHANNEL_ID = int(os.getenv("CHANNEL_ID", "0"))
 WINNERS_COUNT = int(os.getenv("WINNERS_COUNT", "3"))
 ENTRY_EMOJI = "✅"
 
-# Start time (IST)
-START_HOUR = int(os.getenv("START_HOUR", "1"))
-START_MINUTE = int(os.getenv("START_MINUTE", "30"))
-
-# End time (IST)
-END_HOUR = int(os.getenv("END_HOUR", "13"))
-END_MINUTE = int(os.getenv("END_MINUTE", "40"))
+# Times in HH:MM format (IST)
+START_TIME = os.getenv("START_TIME", "01:30")
+END_TIME = os.getenv("END_TIME", "13:40")
 
 # IST timezone
 IST = timezone(timedelta(hours=5, minutes=30))
@@ -45,9 +41,17 @@ def run_web():
 
 Thread(target=run_web, daemon=True).start()
 
+def parse_time(time_str):
+    hour, minute = map(int, time_str.split(":"))
+    return hour, minute
+
+START_HOUR, START_MINUTE = parse_time(START_TIME)
+END_HOUR, END_MINUTE = parse_time(END_TIME)
+
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
+    print(f"Entry starts at {START_TIME} IST, ends at {END_TIME} IST")
     daily_cycle.start()
 
 @tasks.loop(minutes=1)
@@ -62,7 +66,7 @@ async def daily_cycle():
             participants = set()
             embed = discord.Embed(
                 title="🏆 Daily Classic League Entry",
-                description=f"React with {ENTRY_EMOJI} to enter today's draw!\nWinners will be picked at {END_HOUR:02d}:{END_MINUTE:02d} IST",
+                description=f"React with {ENTRY_EMOJI} to enter today's draw!\nWinners will be picked at {END_TIME} IST",
                 color=0xFFAA00
             )
             daily_message = await channel.send(embed=embed)
