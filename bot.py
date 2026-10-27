@@ -10,8 +10,14 @@ TOKEN = os.getenv("TOKEN")
 CHANNEL_ID = int(os.getenv("CHANNEL_ID", "0"))
 WINNERS_COUNT = int(os.getenv("WINNERS_COUNT", "3"))
 ENTRY_EMOJI = "✅"
-START_HOUR = int(os.getenv("START_HOUR", "12"))
-END_HOUR = int(os.getenv("END_HOUR", "23"))
+
+# Start time (IST)
+START_HOUR = int(os.getenv("START_HOUR", "1"))
+START_MINUTE = int(os.getenv("START_MINUTE", "30"))
+
+# End time (IST)
+END_HOUR = int(os.getenv("END_HOUR", "13"))
+END_MINUTE = int(os.getenv("END_MINUTE", "40"))
 
 # IST timezone
 IST = timezone(timedelta(hours=5, minutes=30))
@@ -47,22 +53,24 @@ async def on_ready():
 @tasks.loop(minutes=1)
 async def daily_cycle():
     global daily_message, participants
-    now = datetime.now(IST)  # Use IST time
+    now = datetime.now(IST)
 
-    if now.hour == START_HOUR and now.minute == 0:
+    # Start entry
+    if now.hour == START_HOUR and now.minute == START_MINUTE:
         channel = bot.get_channel(CHANNEL_ID)
         if channel:
             participants = set()
             embed = discord.Embed(
                 title="🏆 Daily Classic League Entry",
-                description=f"React with {ENTRY_EMOJI} to enter today's draw!\nWinners will be picked at {END_HOUR}:00 IST",
+                description=f"React with {ENTRY_EMOJI} to enter today's draw!\nWinners will be picked at {END_HOUR:02d}:{END_MINUTE:02d} IST",
                 color=0xFFAA00
             )
             daily_message = await channel.send(embed=embed)
             await daily_message.add_reaction(ENTRY_EMOJI)
             print(f"New daily entry started at {now}")
 
-    if now.hour == END_HOUR and now.minute == 0 and daily_message:
+    # End entry / pick winners
+    if now.hour == END_HOUR and now.minute == END_MINUTE and daily_message:
         channel = bot.get_channel(CHANNEL_ID)
         if channel and participants:
             winners = random.sample(list(participants), min(WINNERS_COUNT, len(participants)))
